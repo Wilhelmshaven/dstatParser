@@ -1,6 +1,16 @@
 //==============================
+//
 //  By Lihongjie
 //  lihongjie@cmss.chinamobile.com
+//
+//  For Linux: 
+//    g++ dstatParser.cpp -o dstatParser -std=c++11
+//    dstatParser <input> <output> <epoch_start> <epoch_finish> <column_in_csv>
+//
+//  For Windows: 
+//    You may need C++ Distribution 2013
+//    Using bat -> .\dstatParser.exe <input> <output> <epoch_start> <epoch_finish> <column_in_csv>
+//
 //==============================
 
 #include <iostream>
@@ -13,13 +23,16 @@ using namespace std;
 int main(int argc, char **argv)
 {
 	if (argc != 6)
+	{
+		cout << "Invalid input"<<endl;
 		return 0;
+	}
 
 	string inputFile = argv[1];
 	string outputFile = argv[2];
 	double epoch_begin = stod(argv[3]);
 	double epoch_end = stod(argv[4]);
-	int column = stoi(argv[5]);
+	int column = stoi(argv[5]) - 2;
 
 	if (column < 1 || epoch_end < epoch_begin)
 	{
@@ -27,64 +40,65 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	// For test
-	//string inputFile = "test.csv";
+	////For test
+	//string inputFile = "ds-Ttnf-YFQ-ONEST-8-31.csv";
 	//string outputFile = "Summary.csv";
-	//long epoch_begin = 1486452920;
-	//long epoch_end = 1486452930;
-	//int column = 40;
-	// Test end.
+	//long epoch_begin = 1487957600;
+	//long epoch_end = 1487971610;
+	//int column = 12 - 2;
+	////Test end.
 
-	ifstream fileStream;
-	fileStream.open(inputFile);
+	ifstream inputStream;
+	inputStream.open(inputFile);
+	
+	ofstream outputStream;
+	outputStream.open(outputFile, ios_base::app);
 
-	if (!fileStream.is_open())
+	if (!inputStream.is_open() || !outputStream.is_open())
 	{
-		cout << "Can't open input file" << endl;
+		cout << "Can't open file" << endl;
 		return 0;
 	}
 
-	ofstream output;
-	output.open(outputFile, ios::app);
-
 	string buf;
 	vector<double> sum(column, 0);
-	int pivot;
+	int pivot = 0;
+	long epoch = 0;
 	const char delim = ',';
-
-	// We don't need the line 1-7
+	
+	// We don't need the row 1-7
 	for (int i = 0; i < 7; ++i)
 	{
-		getline(fileStream, buf);
+		getline(inputStream, buf);
 	}
 
-	char *strTmp;
-
-	while (!fileStream.eof())
+	while (!inputStream.eof())
 	{
-		getline(fileStream, buf);
+		getline(inputStream, buf, delim);
 		if (buf.empty())
 			break;
 
-		pivot = 2;
-		
-		char* token = strtok_s(&buf[0], &delim, &strTmp);
-		long epoch = stol(token);
+		epoch = stol(buf);
 
-		// We don't need the row 1-2
-		token = strtok_s(NULL, &delim, &strTmp);
-		token = strtok_s(NULL, &delim, &strTmp);
-
-		// Select proper row & sum
 		if (epoch >= epoch_begin && epoch <= epoch_end)
-		{	
-			while (token)
-			{			
-				sum[pivot] += stod(token);
-				++pivot;
-				token = strtok_s(NULL, &delim, &strTmp);
+		{
+			// We don't need col 2
+			getline(inputStream, buf, delim);
+			
+			for (int i = 0; i < column - 1; ++i)
+			{
+				getline(inputStream, buf, delim);
+				sum[i] += stod(buf);
 			}
+			getline(inputStream, buf);
+			sum[column - 1] += stod(buf);
 		}
+		else
+		{
+			// Abort this line
+			getline(inputStream, buf);
+		}
+		
 	}
 
 	// Get average
@@ -95,13 +109,18 @@ int main(int argc, char **argv)
 	}
 
 	// Write results to file
-	output << inputFile << ",";
+	outputStream << inputFile << ",";
 	if (column > 0)
-		output << sum[0];
+		outputStream << sum[0];
 	for (int i = 1; i < column; ++i)
 	{
-		output << "," << sum[i];
+		outputStream << "," << sum[i];
 	}
+
+	outputStream << endl;
+
+	inputStream.close();
+	outputStream.close();
 
 	return 0;
 }
