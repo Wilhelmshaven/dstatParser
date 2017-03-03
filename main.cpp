@@ -9,9 +9,14 @@
 //
 //  For Windows: 
 //    You may need C++ Distribution 2013
-//    Using bat -> .\dstatParser.exe <input> <output> <epoch_start> <epoch_finish>
+//    Using .bat file -> .\dstatParser.exe <input> <output> <epoch_start> <epoch_finish>
 //
-//  Eg. .\dstatParser.exe ds-Ttnf-YFQ-ONEST-8-{31,32,46,47}.csv Summary.csv 1487957600 1487971610
+//  Eg.1: 
+//    .\dstatParser.exe ds-Ttnf-YFQ-ONEST-8-{31,32,46,47}.csv Summary.csv 1487957600 1487971610
+//  Eg.2:
+//    for /l %%i in (1,1,110) do (
+//        .\ds-Ttcmsdrn.exe ds-Ttcmsdrn -172.16.127.%%i.csv Summary.csv 1482400200 1482400260
+//    )
 //
 //  Notes:
 //    03-03: remove column param & handle simple batch input by '{num1,num2,num3}'
